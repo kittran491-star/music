@@ -1,8 +1,7 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -14,7 +13,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
 
   <!-- Tone.js -->
   <script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script>
@@ -24,9 +26,12 @@
 
 <body>
 
-<div class="phone">
+<div id="app" class="phone">
 
-  <!-- Header -->
+  <!-- ================================= -->
+  <!-- HEADER -->
+  <!-- ================================= -->
+
   <header class="header">
 
     <div class="logo">
@@ -35,77 +40,130 @@
     </div>
 
     <div class="header-actions">
-      <button id="newBtn" class="circle">＋</button>
-      <button id="saveBtn" class="circle">⤓</button>
-      <button id="menuBtn" class="circle">☰</button>
+
+      <button
+        id="newProjectBtn"
+        class="circle-btn"
+        title="New Project">
+        ＋
+      </button>
+
+      <button
+        id="saveProjectBtn"
+        class="circle-btn"
+        title="Save Project">
+        ⤓
+      </button>
+
+      <button
+        id="menuBtn"
+        class="circle-btn"
+        title="Menu">
+        ☰
+      </button>
+
     </div>
 
   </header>
 
-  <!-- Toolbar -->
+  <!-- ================================= -->
+  <!-- TOOLBAR -->
+  <!-- ================================= -->
+
   <section class="toolbar">
 
     <div class="tool-row">
 
-      <button id="brushTool" class="tool active">✏</button>
-      <button id="eraseTool" class="tool">⌫</button>
-      <button id="selectTool" class="tool">⬚</button>
-      <button id="undoBtn" class="tool">↶</button>
-      <button id="redoBtn" class="tool">↷</button>
+      <button id="brushTool" class="tool active">
+        ✏
+      </button>
+
+      <button id="eraserTool" class="tool">
+        ⌫
+      </button>
+
+      <button id="selectTool" class="tool">
+        ⬚
+      </button>
+
+      <button id="undoBtn" class="tool">
+        ↶
+      </button>
+
+      <button id="redoBtn" class="tool">
+        ↷
+      </button>
 
     </div>
 
-    <div class="palette" id="palette">
+    <!-- Color Tracks -->
 
-      <button class="color active" data-track="0" style="background:#A98DF5"></button>
-      <button class="color" data-track="1" style="background:#64D2B0"></button>
-      <button class="color" data-track="2" style="background:#74B8FF"></button>
-      <button class="color" data-track="3" style="background:#FF9E7A"></button>
-      <button class="color" data-track="4" style="background:#F48B94"></button>
-      <button class="color" data-track="5" style="background:#FFD96B"></button>
-      <button class="color" data-track="6" style="background:#B7E3A1"></button>
-      <button class="color" data-track="7" style="background:#D8D8D8"></button>
-      <button class="color" data-track="8" style="background:#111827"></button>
+    <div id="palette" class="palette">
+
+      <button class="color active" data-track="0"></button>
+      <button class="color" data-track="1"></button>
+      <button class="color" data-track="2"></button>
+      <button class="color" data-track="3"></button>
+      <button class="color" data-track="4"></button>
+      <button class="color" data-track="5"></button>
+      <button class="color" data-track="6"></button>
+      <button class="color" data-track="7"></button>
+      <button class="color" data-track="8"></button>
 
     </div>
 
   </section>
 
-  <!-- Canvas -->
+  <!-- ================================= -->
+  <!-- CANVAS -->
+  <!-- ================================= -->
+
   <section class="editor">
 
-    <div class="canvas-wrapper">
-
-      <div id="playhead"></div>
-      <div id="playTriangle"></div>
+    <div id="canvasWrapper" class="canvas-wrapper">
 
       <canvas id="gridCanvas"></canvas>
 
+      <!-- Playhead -->
+      <div id="playhead"></div>
+      <div id="playTriangle"></div>
+
+      <!-- Selection -->
+      <div id="selectionBox" hidden></div>
+
     </div>
 
   </section>
 
-  <!-- Controls -->
-  <section class="controls">
+  <!-- ================================= -->
+  <!-- TRANSPORT -->
+  <!-- ================================= -->
+
+  <section class="transport-panel">
 
     <div class="transport">
 
-      <button id="playBtn" class="play-button">
+      <button id="playBtn" class="play-btn">
         ▶
       </button>
 
       <div class="tempo">
 
-        <div class="tempo-top">
+        <div class="tempo-head">
+
           <span>BPM</span>
-          <strong id="bpmLabel">120</strong>
+
+          <strong id="bpmLabel">
+            120
+          </strong>
+
         </div>
 
         <input
           id="bpmSlider"
           type="range"
-          min="60"
-          max="180"
+          min="40"
+          max="220"
           value="120"
         >
 
@@ -113,79 +171,165 @@
 
     </div>
 
-    <div class="settings-grid">
+  </section>
 
-      <div class="setting">
-        <label>Instrument</label>
+  <!-- ================================= -->
+  <!-- SETTINGS -->
+  <!-- ================================= -->
 
-        <select id="instrumentSelect">
-          <option>Music Box</option>
-          <option>Piano</option>
-          <option>Synth</option>
-          <option>Bell</option>
-        </select>
-      </div>
+  <section class="settings">
 
-      <div class="setting">
-        <label>Key</label>
+    <div class="setting">
 
-        <select id="keySelect">
-          <option>C</option>
-          <option>D</option>
-          <option>E</option>
-          <option>F</option>
-          <option>G</option>
-          <option>A</option>
-          <option>B</option>
-        </select>
-      </div>
+      <label>Instrument</label>
 
-      <div class="setting">
-        <label>Scale</label>
+      <select id="instrumentSelect">
 
-        <select id="scaleSelect">
-          <option>Major</option>
-          <option>Minor</option>
-          <option>Pentatonic</option>
-        </select>
-      </div>
+        <option>Music Box</option>
+        <option>Piano</option>
+        <option>Synth</option>
+        <option>Bell</option>
+        <option>Marimba</option>
 
-      <div class="setting">
-        <label>Grid</label>
+      </select>
 
-        <select id="gridSelect">
-          <option>24 × 16</option>
-          <option>32 × 16</option>
-          <option>48 × 16</option>
-        </select>
-      </div>
+    </div>
+
+    <div class="setting">
+
+      <label>Key</label>
+
+      <select id="keySelect">
+
+        <option>C</option>
+        <option>C#</option>
+        <option>D</option>
+        <option>D#</option>
+        <option>E</option>
+        <option>F</option>
+        <option>F#</option>
+        <option>G</option>
+        <option>G#</option>
+        <option>A</option>
+        <option>A#</option>
+        <option>B</option>
+
+      </select>
+
+    </div>
+
+    <div class="setting">
+
+      <label>Scale</label>
+
+      <select id="scaleSelect">
+
+        <option>Major</option>
+        <option>Minor</option>
+        <option>Pentatonic</option>
+        <option>Chromatic</option>
+
+      </select>
+
+    </div>
+
+    <div class="setting">
+
+      <label>Grid</label>
+
+      <select id="gridSelect">
+
+        <option value="24">24 Steps</option>
+        <option value="32">32 Steps</option>
+        <option value="48">48 Steps</option>
+        <option value="64">64 Steps</option>
+
+      </select>
 
     </div>
 
   </section>
 
-  <!-- Track list -->
+  <!-- ================================= -->
+  <!-- TRACKS -->
+  <!-- ================================= -->
+
   <section class="tracks">
 
-    <div class="track" data-track="0">
-      <span class="dot" style="background:#A98DF5"></span>
-      <span>Track 1</span>
+    <div class="tracks-title">
+      Tracks
     </div>
 
-    <div class="track" data-track="1">
-      <span class="dot" style="background:#64D2B0"></span>
-      <span>Track 2</span>
-    </div>
+    <div id="trackList">
 
-    <div class="track" data-track="2">
-      <span class="dot" style="background:#74B8FF"></span>
-      <span>Track 3</span>
+      <button class="track active" data-track="0">
+        <span class="dot"></span>
+        <span>Track 1</span>
+      </button>
+
+      <button class="track" data-track="1">
+        <span class="dot"></span>
+        <span>Track 2</span>
+      </button>
+
+      <button class="track" data-track="2">
+        <span class="dot"></span>
+        <span>Track 3</span>
+      </button>
+
+      <button class="track" data-track="3">
+        <span class="dot"></span>
+        <span>Track 4</span>
+      </button>
+
+      <button class="track" data-track="4">
+        <span class="dot"></span>
+        <span>Track 5</span>
+      </button>
+
+      <button class="track" data-track="5">
+        <span class="dot"></span>
+        <span>Track 6</span>
+      </button>
+
+      <button class="track" data-track="6">
+        <span class="dot"></span>
+        <span>Track 7</span>
+      </button>
+
+      <button class="track" data-track="7">
+        <span class="dot"></span>
+        <span>Track 8</span>
+      </button>
+
+      <button class="track" data-track="8">
+        <span class="dot"></span>
+        <span>Track 9</span>
+      </button>
+
     </div>
 
   </section>
+
+  <!-- ================================= -->
+  <!-- FOOTER -->
+  <!-- ================================= -->
+
+  <footer class="footer">
+
+    <button id="exportMidiBtn" class="footer-btn">
+      Export MIDI
+    </button>
+
+    <button id="exportWavBtn" class="footer-btn">
+      Export WAV
+    </button>
+
+  </footer>
 
 </div>
 
+<!-- Engine -->
 <script src="app.js"></script>
 
 </body>
