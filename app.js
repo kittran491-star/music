@@ -226,7 +226,7 @@ function drawLabels(){
 
 }
 
-ffunction drawNotes(){
+function drawNotes(){
 
   for(let r=0; r<CONFIG.rows; r++){
 
