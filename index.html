@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Play Music Theory Mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script>
+<style>
+:root{--bg:#F7F4EF;--panel:#FBF9F5;--line:#E7E2DA;--text:#2F2943;--accent:#A98DF5}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(180deg,#ECE5FF,#F7F4EF);font-family:Inter,sans-serif;display:flex;justify-content:center;padding:14px;color:var(--text)}
+.app{width:min(100%,430px);background:var(--bg);border-radius:34px;padding:16px;box-shadow:0 24px 50px rgba(0,0,0,.15)}
+header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.logo{font-family:"Cormorant Garamond",serif;font-size:30px;line-height:.9}
+.top{display:flex;gap:8px}.ic{width:42px;height:42px;border-radius:50%;border:none;background:#fff;font-size:18px}
+.panel{background:var(--panel);border-radius:24px;padding:14px;margin-bottom:14px}
+.tools,.colors{display:flex;justify-content:space-between}.tool{width:42px;height:42px;border-radius:50%;border:none;background:#fff}.tool.active{background:var(--accent);color:#fff}
+.sw{width:32px;height:32px;border-radius:50%;border:3px solid transparent}.sw.sel{border-color:#7C3AED}
+.wrap{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#FCFBF8}
+#canvas{display:block;width:100%;touch-action:none}
+#playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(167,139,250,.55);pointer-events:none}
+.tri{position:absolute;top:2px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid var(--accent);transform:translateX(-7px)}
+.playrow{display:flex;align-items:center;gap:14px}.play{width:62px;height:62px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.box{background:#fff;padding:10px;border-radius:14px;font-size:13px}.small{font-size:11px;color:#7B768A}
+.save{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.save button{border:none;background:#fff;border-radius:14px;padding:10px}
+</style></head>
+<body><div class="app">
+<header><div class="logo">play music<br>theory ✦</div><div class="top"><button class="ic">📁</button><button class="ic">⋯</button><button class="ic">☰</button></div></header>
+<div class="panel"><div class="tools"><button id="brush" class="tool active">✏️</button><button id="eraser" class="tool">🩹</button><button id="undo" class="tool">↶</button><button id="clear" class="tool">🗑</button><button class="tool">⬚</button></div><div class="colors" style="margin-top:12px"><div class="sw sel" style="background:#A98DF5"></div><div class="sw" style="background:#64D2B0"></div><div class="sw" style="background:#FF9E7A"></div><div class="sw" style="background:#F48B94"></div><div class="sw" style="background:#74B8FF"></div><div class="sw" style="background:#FFD96B"></div><div class="sw" style="background:#F4C9CF"></div><div class="sw" style="background:#D8D8D8"></div></div></div>
+<div class="wrap"><canvas id="canvas"></canvas><div id="playhead"></div><div id="tri" class="tri"></div></div>
+<div class="panel"><div class="playrow"><button id="play" class="play">▶</button><div style="flex:1"><div style="display:flex;justify-content:space-between"><b><span id="bpmText">120</span> BPM</b><span class="small">24 steps</span></div><input id="bpm" type="range" min="60" max="180" value="120" style="width:100%"></div></div><div class="grid2"><div><div class="small">Scale</div><div class="box">Major Pentatonic</div></div><div><div class="small">Key</div><div class="box">C</div></div><div><div class="small">Quantize</div><div class="box">1/8</div></div><div><div class="small">Octave</div><div class="box">3</div></div></div><div class="save"><button>💾 Save</button><button>🎵 WAV</button><button>🎹 MIDI</button></div></div>
+</div>
+<script>
+const cvs=document.getElementById('canvas'),ctx=cvs.getContext('2d');
+const ROWS=16,COLS=24,LEFT=34,labels=["C6","B","A","G","F","E","D","C5","B","A","G","F","E","D","C4","B"];
+let cell,grid,mode='draw',data=Array.from({length:ROWS},()=>Array(COLS).fill(0)),hist=[];
+const synth=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:.02,release:.35}}).toDestination();
+function resize(){const w=cvs.parentElement.clientWidth;cvs.width=w*devicePixelRatio;cvs.height=420*devicePixelRatio;cvs.style.height='420px';ctx.scale(devicePixelRatio,devicePixelRatio);grid=(w-LEFT)/COLS;cell=420/ROWS;draw()}
+window.addEventListener('resize',resize);
+function draw(){const w=cvs.clientWidth,h=420;ctx.clearRect(0,0,w,h);ctx.fillStyle="#F8F5F1";ctx.fillRect(0,0,LEFT,h);ctx.strokeStyle="#E7E2DA";ctx.lineWidth=1;for(let r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*cell);ctx.lineTo(w,r*cell);ctx.stroke()}for(let c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(LEFT+c*grid,0);ctx.lineTo(LEFT+c*grid,h);ctx.stroke()}ctx.fillStyle="#7B768A";ctx.font="10px Inter";ctx.textAlign="center";ctx.textBaseline="middle";labels.forEach((t,i)=>ctx.fillText(t,LEFT/2,i*cell+cell/2));for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(data[r][c]){const x=LEFT+c*grid+3,y=r*cell+3;const s=Math.min(grid,cell)-6;round(x,y,s,6)}}function round(x,y,w,r){ctx.fillStyle="#A98DF5";ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+w,r);ctx.arcTo(x+w,y+w,x,y+w,r);ctx.arcTo(x,y+w,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill()}
+function hit(e){const rect=cvs.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;if(x<LEFT)return null;const c=Math.floor((x-LEFT)/grid),r=Math.floor(y/cell);if(r<0||r>=ROWS||c<0||c>=COLS)return null;return{r,c}}
+let drag=false;cvs.onpointerdown=e=>{drag=true;paint(e)};cvs.onpointermove=e=>drag&&paint(e);window.onpointerup=()=>drag=false;
+function paint(e){const p=hit(e);if(!p)return;hist.push(JSON.stringify(data));data[p.r][p.c]=mode==='draw'?1:0;draw()}
+brush.onclick=()=>{mode='draw';brush.classList.add('active');eraser.classList.remove('active')};eraser.onclick=()=>{mode='erase';eraser.classList.add('active');brush.classList.remove('active')};undo.onclick=()=>{if(!hist.length)return;data=JSON.parse(hist.pop());draw()};clear.onclick=()=>{data=Array.from({length:ROWS},()=>Array(COLS).fill(0));draw()};bpm.oninput=()=>bpmText.textContent=bpm.value;
+async function play(){await Tone.start();const beat=60000/ +bpm.value/2;const ph=document.getElementById('playhead'),tri=document.getElementById('tri');for(let c=0;c<COLS;c++){const x=LEFT+c*grid;ph.style.left=x+'px';tri.style.left=(x+1)+'px';for(let r=0;r<ROWS;r++)if(data[r][c]){const midi=84-r;synth.triggerAttackRelease(Tone.Frequency(midi,"midi"),"8n")}await new Promise(r=>setTimeout(r,beat))}ph.style.left=LEFT+'px';tri.style.left=(LEFT+1)+'px'}play.onclick=play;resize();
+</script></body></html>
