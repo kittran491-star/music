@@ -226,39 +226,33 @@ function drawLabels(){
 
 }
 
-function drawNotes(){
+ffunction drawNotes(){
 
-  for(let r=0;r<CONFIG.rows;r++){
+  for(let r=0; r<CONFIG.rows; r++){
 
-    for(let c=0;c<CONFIG.cols;c++){
+    for(let c=0; c<CONFIG.cols; c++){
 
-      const note=grid[r][c];
-
+      const note = grid[r][c];
       if(!note) continue;
 
-      const x=
-        CONFIG.labelWidth+
-        c*CELL_W-
-        state.offsetX+
-        3;
+      const x =
+        CONFIG.labelWidth +
+        c * CELL_W -
+        state.offsetX;
 
-      const y=r*CELL_H+3;
+      const y = r * CELL_H;
 
-      const size=
-        Math.min(CELL_W,CELL_H)-6;
+      if(x + CELL_W < CONFIG.labelWidth) continue;
+      if(x > WIDTH) continue;
 
-      if(x>WIDTH) continue;
-      if(x+size<CONFIG.labelWidth) continue;
+      ctx.fillStyle = TRACK_COLORS[note.track];
 
-      ctx.fillStyle=
-        TRACK_COLORS[note.track];
-
-      roundRect(
-        x,
-        y,
-        size,
-        size,
-        5
+      // Lấp kín toàn bộ ô
+      ctx.fillRect(
+        x + 1,
+        y + 1,
+        CELL_W - 2,
+        CELL_H - 2
       );
 
     }
@@ -309,24 +303,23 @@ function paint(cell){
 
   if(!cell) return;
 
-  if(state.tool==="brush"){
+  const {row, col} = cell;
 
-    grid[cell.row][cell.col]={
-      track:state.track
+  if(state.tool === "brush"){
+
+    grid[row][col] = {
+      track: state.track
     };
 
-  }
+  }else if(state.tool === "erase"){
 
-  if(state.tool==="erase"){
-
-    grid[cell.row][cell.col]=null;
+    grid[row][col] = null;
 
   }
 
   draw();
 
 }
-
 canvas.addEventListener("pointerdown",e=>{
 
   if(state.tool==="select") return;
