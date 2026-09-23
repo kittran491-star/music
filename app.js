@@ -1,37 +1,28 @@
-/* ======================================================
+/* =========================================================
    PLAY MUSIC THEORY PRO
-   APP.JS (PART 1/3)
-   Canvas Engine + State + Drawing
-====================================================== */
+   app.js — Part 1/3
+   Canvas Engine + Drawing
+========================================================= */
 
-// ---------- CONSTANTS ----------
+// ---------- CONFIG ----------
 
-const ROWS = 16;
-let COLS = 24;
-
-const LABEL_WIDTH = 34;
-const CANVAS_HEIGHT = 430;
+const CONFIG = {
+  rows: 16,
+  cols: 24,
+  labelWidth: 34,
+  canvasHeight: 430,
+  maxHistory: 100
+};
 
 const NOTE_LABELS = [
   "C6","B5","A5","G5","F5","E5","D5","C5",
   "B4","A4","G4","F4","E4","D4","C4","B3"
 ];
 
-const MIDI = [
-  84,83,81,79,77,76,74,72,
-  71,69,67,65,64,62,60,59
-];
-
 const TRACK_COLORS = [
-  "#A98DF5",
-  "#64D2B0",
-  "#74B8FF",
-  "#FF9E7A",
-  "#F48B94",
-  "#FFD96B",
-  "#B7E3A1",
-  "#D8D8D8",
-  "#111827"
+  "#A98DF5","#64D2B0","#74B8FF",
+  "#FF9E7A","#F48B94","#FFD96B",
+  "#B7E3A1","#D8D8D8","#111827"
 ];
 
 // ---------- DOM ----------
@@ -39,83 +30,86 @@ const TRACK_COLORS = [
 const canvas = document.getElementById("gridCanvas");
 const ctx = canvas.getContext("2d");
 
-const playhead = document.getElementById("playhead");
-const triangle = document.getElementById("playTriangle");
+const brushBtn = document.getElementById("brushTool");
+const eraserBtn = document.getElementById("eraserTool");
+const selectBtn = document.getElementById("selectTool");
+
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
 
 const bpmSlider = document.getElementById("bpmSlider");
 const bpmLabel = document.getElementById("bpmLabel");
 
+const palette = document.querySelectorAll(".color");
+const tracks = document.querySelectorAll(".track");
+
 // ---------- STATE ----------
 
 const state = {
-
-  tool : "brush",
-
-  currentTrack : 0,
-
-  bpm : 120,
-
-  zoom : 1,
-
-  offsetX : 0,
-
-  playing : false
-
+  tool: "brush",
+  track: 0,
+  bpm: 120,
+  zoom: 1,
+  offsetX: 0,
+  playing: false
 };
 
 let history = [];
 let future = [];
 
-// ---------- GRID DATA ----------
+// ---------- GRID ----------
 
-function createGrid(){
-
+function createGrid() {
   return Array.from(
-    {length:ROWS},
-    ()=>Array(COLS).fill(null)
+    { length: CONFIG.rows },
+    () => Array(CONFIG.cols).fill(null)
   );
-
 }
 
 let grid = createGrid();
 
-// ---------- CANVAS SIZE ----------
+// ---------- CANVAS ----------
 
-let W = 0;
-let H = CANVAS_HEIGHT;
+let WIDTH = 0;
+let HEIGHT = CONFIG.canvasHeight;
 
 let CELL_W = 0;
 let CELL_H = 0;
 
-function resizeCanvas(){
+function resizeCanvas() {
 
   const dpr = window.devicePixelRatio || 1;
 
-  W = canvas.parentElement.clientWidth;
+  WIDTH = canvas.parentElement.clientWidth;
 
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
+  canvas.width = WIDTH * dpr;
+  canvas.height = HEIGHT * dpr;
 
-  canvas.style.height = H + "px";
+  canvas.style.width = WIDTH + "px";
+  canvas.style.height = HEIGHT + "px";
 
   ctx.setTransform(dpr,0,0,dpr,0,0);
 
-  CELL_W = ((W - LABEL_WIDTH) / COLS) * state.zoom;
-  CELL_H = H / ROWS;
+  CELL_W =
+    ((WIDTH - CONFIG.labelWidth) / CONFIG.cols) *
+    state.zoom;
+
+  CELL_H =
+    HEIGHT / CONFIG.rows;
 
   draw();
 
 }
 
-window.addEventListener("resize",resizeCanvas);
+window.addEventListener("resize", resizeCanvas);
 
 // ---------- HISTORY ----------
 
-function snapshot(){
+function pushHistory(){
 
   history.push(JSON.stringify(grid));
 
-  if(history.length > 100){
+  if(history.length > CONFIG.maxHistory){
     history.shift();
   }
 
@@ -125,7 +119,7 @@ function snapshot(){
 
 function undo(){
 
-  if(!history.length) return;
+  if(history.length===0) return;
 
   future.push(JSON.stringify(grid));
 
@@ -137,7 +131,7 @@ function undo(){
 
 function redo(){
 
-  if(!future.length) return;
+  if(future.length===0) return;
 
   history.push(JSON.stringify(grid));
 
@@ -147,7 +141,10 @@ function redo(){
 
 }
 
-// ---------- DRAW HELPERS ----------
+undoBtn.onclick = undo;
+redoBtn.onclick = redo;
+
+// ---------- DRAW ----------
 
 function roundRect(x,y,w,h,r){
 
@@ -156,11 +153,8 @@ function roundRect(x,y,w,h,r){
   ctx.moveTo(x+r,y);
 
   ctx.arcTo(x+w,y,x+w,y+h,r);
-
   ctx.arcTo(x+w,y+h,x,y+h,r);
-
   ctx.arcTo(x,y+h,x,y,r);
-
   ctx.arcTo(x,y,x+w,y,r);
 
   ctx.closePath();
@@ -172,12 +166,10 @@ function roundRect(x,y,w,h,r){
 function drawBackground(){
 
   ctx.fillStyle="#FCFBF8";
-
-  ctx.fillRect(0,0,W,H);
+  ctx.fillRect(0,0,WIDTH,HEIGHT);
 
   ctx.fillStyle="#F8F5F1";
-
-  ctx.fillRect(0,0,LABEL_WIDTH,H);
+  ctx.fillRect(0,0,CONFIG.labelWidth,HEIGHT);
 
 }
 
@@ -186,28 +178,27 @@ function drawGrid(){
   ctx.strokeStyle="#E8E2DA";
   ctx.lineWidth=1;
 
-  for(let r=0;r<=ROWS;r++){
+  for(let r=0;r<=CONFIG.rows;r++){
+
+    const y=r*CELL_H;
 
     ctx.beginPath();
-
-    ctx.moveTo(0,r*CELL_H);
-
-    ctx.lineTo(W,r*CELL_H);
-
+    ctx.moveTo(0,y);
+    ctx.lineTo(WIDTH,y);
     ctx.stroke();
 
   }
 
-  for(let c=0;c<=COLS;c++){
+  for(let c=0;c<=CONFIG.cols;c++){
 
-    const x = LABEL_WIDTH + c*CELL_W - state.offsetX;
+    const x=
+      CONFIG.labelWidth+
+      c*CELL_W-
+      state.offsetX;
 
     ctx.beginPath();
-
     ctx.moveTo(x,0);
-
-    ctx.lineTo(x,H);
-
+    ctx.lineTo(x,HEIGHT);
     ctx.stroke();
 
   }
@@ -227,8 +218,8 @@ function drawLabels(){
 
     ctx.fillText(
       note,
-      LABEL_WIDTH/2,
-      index*CELL_H + CELL_H/2
+      CONFIG.labelWidth/2,
+      index*CELL_H+CELL_H/2
     );
 
   });
@@ -237,31 +228,29 @@ function drawLabels(){
 
 function drawNotes(){
 
-  for(let r=0;r<ROWS;r++){
+  for(let r=0;r<CONFIG.rows;r++){
 
-    for(let c=0;c<COLS;c++){
+    for(let c=0;c<CONFIG.cols;c++){
 
-      const note = grid[r][c];
+      const note=grid[r][c];
 
       if(!note) continue;
 
-      const x =
-        LABEL_WIDTH +
-        c*CELL_W -
-        state.offsetX +
+      const x=
+        CONFIG.labelWidth+
+        c*CELL_W-
+        state.offsetX+
         3;
 
-      const y =
-        r*CELL_H + 3;
+      const y=r*CELL_H+3;
 
-      const size =
+      const size=
         Math.min(CELL_W,CELL_H)-6;
 
-      if(x + size < LABEL_WIDTH) continue;
+      if(x>WIDTH) continue;
+      if(x+size<CONFIG.labelWidth) continue;
 
-      if(x > W) continue;
-
-      ctx.fillStyle =
+      ctx.fillStyle=
         TRACK_COLORS[note.track];
 
       roundRect(
@@ -280,42 +269,37 @@ function drawNotes(){
 
 function draw(){
 
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(0,0,WIDTH,HEIGHT);
 
   drawBackground();
-
   drawGrid();
-
   drawLabels();
-
   drawNotes();
 
 }
 
 // ---------- POINTER ----------
 
-let drawing = false;
+let drawing=false;
 
 function pointerToCell(e){
 
-  const rect =
+  const rect=
     canvas.getBoundingClientRect();
 
-  const px = e.clientX - rect.left;
+  const px=e.clientX-rect.left;
+  const py=e.clientY-rect.top;
 
-  const py = e.clientY - rect.top;
+  if(px<CONFIG.labelWidth) return null;
 
-  if(px < LABEL_WIDTH) return null;
-
-  const col = Math.floor(
-    (px + state.offsetX - LABEL_WIDTH)
-    / CELL_W
+  const col=Math.floor(
+    (px+state.offsetX-CONFIG.labelWidth)/CELL_W
   );
 
-  const row = Math.floor(py / CELL_H);
+  const row=Math.floor(py/CELL_H);
 
-  if(row<0 || row>=ROWS) return null;
-  if(col<0 || col>=COLS) return null;
+  if(row<0||row>=CONFIG.rows) return null;
+  if(col<0||col>=CONFIG.cols) return null;
 
   return {row,col};
 
@@ -325,19 +309,17 @@ function paint(cell){
 
   if(!cell) return;
 
-  const {row,col}=cell;
-
   if(state.tool==="brush"){
 
-    grid[row][col]={
-      track:state.currentTrack
+    grid[cell.row][cell.col]={
+      track:state.track
     };
 
   }
 
-  else if(state.tool==="erase"){
+  if(state.tool==="erase"){
 
-    grid[row][col]=null;
+    grid[cell.row][cell.col]=null;
 
   }
 
@@ -347,9 +329,11 @@ function paint(cell){
 
 canvas.addEventListener("pointerdown",e=>{
 
+  if(state.tool==="select") return;
+
   drawing=true;
 
-  snapshot();
+  pushHistory();
 
   paint(pointerToCell(e));
 
@@ -369,48 +353,70 @@ window.addEventListener("pointerup",()=>{
 
 });
 
-// ---------- TOOLBAR ----------
+// ---------- TOOLS ----------
 
-document.getElementById("brushTool").onclick=()=>{
+function activateTool(name){
 
-  state.tool="brush";
+  state.tool=name;
 
-  brushTool.classList.add("active");
+  [brushBtn,eraserBtn,selectBtn]
+    .forEach(b=>b.classList.remove("active"));
 
-  eraserTool.classList.remove("active");
+  if(name==="brush") brushBtn.classList.add("active");
+  if(name==="erase") eraserBtn.classList.add("active");
+  if(name==="select") selectBtn.classList.add("active");
 
-};
+}
 
-document.getElementById("eraserTool").onclick=()=>{
+brushBtn.onclick=()=>activateTool("brush");
+eraserBtn.onclick=()=>activateTool("erase");
+selectBtn.onclick=()=>activateTool("select");
 
-  state.tool="erase";
+// ---------- TRACK ----------
 
-  eraserTool.classList.add("active");
-
-  brushTool.classList.remove("active");
-
-};
-
-document.getElementById("undoBtn").onclick=undo;
-
-document.getElementById("redoBtn").onclick=redo;
-
-// ---------- PALETTE ----------
-
-document
-.querySelectorAll(".color")
-.forEach(btn=>{
+palette.forEach(btn=>{
 
   btn.onclick=()=>{
 
-    document
-    .querySelectorAll(".color")
-    .forEach(c=>c.classList.remove("active"));
+    palette.forEach(b=>
+      b.classList.remove("active")
+    );
 
     btn.classList.add("active");
 
-    state.currentTrack=
+    state.track=
       Number(btn.dataset.track);
+
+    tracks.forEach(t=>
+      t.classList.remove("active")
+    );
+
+    tracks[state.track]
+      .classList.add("active");
+
+  };
+
+});
+
+tracks.forEach(btn=>{
+
+  btn.onclick=()=>{
+
+    tracks.forEach(t=>
+      t.classList.remove("active")
+    );
+
+    btn.classList.add("active");
+
+    state.track=
+      Number(btn.dataset.track);
+
+    palette.forEach(p=>
+      p.classList.remove("active")
+    );
+
+    palette[state.track]
+      .classList.add("active");
 
   };
 
@@ -432,9 +438,10 @@ bpmSlider.oninput=()=>{
 
 document.getElementById("gridSelect").onchange=e=>{
 
-  COLS = Number(e.target.value);
+  CONFIG.cols=
+    Number(e.target.value);
 
-  grid = createGrid();
+  grid=createGrid();
 
   resizeCanvas();
 
@@ -443,10 +450,11 @@ document.getElementById("gridSelect").onchange=e=>{
 // ---------- INIT ----------
 
 resizeCanvas();
-/* ======================================================
-   APP.JS (PART 2/3)
-   Pan + Pinch Zoom + Selection
-====================================================== */
+/* =========================================================
+   PLAY MUSIC THEORY PRO
+   app.js — Part 2/3
+   Zoom + Pan + Selection
+========================================================= */
 
 // ---------- VIEWPORT ----------
 
@@ -456,88 +464,90 @@ const viewport = {
 };
 
 let pointers = new Map();
-let pinchStartDistance = 0;
-let pinchStartZoom = 1;
-let panStartOffset = 0;
+
+let pinchDistance = 0;
+let pinchZoom = 1;
+
 let panStartX = 0;
+let panStartOffset = 0;
 
-// ---------- DISTANCE ----------
+// ---------- HELPERS ----------
 
-function distance(a, b) {
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-// ---------- CLAMP ----------
-
-function clamp(value, min, max) {
+function clamp(value, min, max){
   return Math.max(min, Math.min(max, value));
 }
 
-// ---------- UPDATE CELL ----------
+function getDistance(a,b){
 
-function updateGridSize() {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+
+  return Math.sqrt(dx*dx + dy*dy);
+
+}
+
+function updateGridSize(){
 
   CELL_W =
-    ((W - LABEL_WIDTH) / COLS) *
-    state.zoom;
+    ((WIDTH - CONFIG.labelWidth) / CONFIG.cols)
+    * state.zoom;
 
   draw();
 
 }
 
-// ---------- PINCH START ----------
+// ---------- POINTER TRACKING ----------
 
-canvas.addEventListener("pointerdown", e => {
+canvas.addEventListener("pointerdown",e=>{
 
-  pointers.set(e.pointerId, {
-    x: e.clientX,
-    y: e.clientY
+  pointers.set(e.pointerId,{
+    x:e.clientX,
+    y:e.clientY
   });
 
-  if (pointers.size === 2) {
+  if(pointers.size===2){
 
-    const pts = [...pointers.values()];
+    const pts=[...pointers.values()];
 
-    pinchStartDistance = distance(
-      pts[0],
-      pts[1]
-    );
+    pinchDistance =
+      getDistance(pts[0],pts[1]);
 
-    pinchStartZoom = state.zoom;
+    pinchZoom = state.zoom;
+
+  }
+
+  if(state.tool==="select"){
+
+    panStartX = e.clientX;
+    panStartOffset = state.offsetX;
 
   }
 
 });
 
-// ---------- POINTER MOVE ----------
+canvas.addEventListener("pointermove",e=>{
 
-canvas.addEventListener("pointermove", e => {
+  if(!pointers.has(e.pointerId)) return;
 
-  if (!pointers.has(e.pointerId)) return;
-
-  pointers.set(e.pointerId, {
-    x: e.clientX,
-    y: e.clientY
+  pointers.set(e.pointerId,{
+    x:e.clientX,
+    y:e.clientY
   });
 
-  // pinch zoom
-  if (pointers.size === 2) {
+  // ---------- PINCH ----------
 
-    const pts = [...pointers.values()];
+  if(pointers.size===2){
 
-    const current = distance(
-      pts[0],
-      pts[1]
-    );
+    const pts=[...pointers.values()];
+
+    const current =
+      getDistance(pts[0],pts[1]);
 
     const scale =
-      current /
-      pinchStartDistance;
+      current / pinchDistance;
 
     state.zoom = clamp(
-      pinchStartZoom * scale,
+      pinchZoom * scale,
       viewport.minZoom,
       viewport.maxZoom
     );
@@ -548,21 +558,27 @@ canvas.addEventListener("pointermove", e => {
 
   }
 
-  // pan tool
-  if (
-    state.tool === "select" &&
-    pointers.size === 1
-  ) {
+  // ---------- PAN ----------
+
+  if(
+    state.tool==="select" &&
+    pointers.size===1
+  ){
 
     const dx =
       e.clientX - panStartX;
 
-    state.offsetX =
-      clamp(
-        panStartOffset - dx,
-        0,
-        Math.max(0, COLS * CELL_W - (W - LABEL_WIDTH))
-      );
+    const maxOffset = Math.max(
+      0,
+      CONFIG.cols * CELL_W -
+      (WIDTH - CONFIG.labelWidth)
+    );
+
+    state.offsetX = clamp(
+      panStartOffset - dx,
+      0,
+      maxOffset
+    );
 
     draw();
 
@@ -570,63 +586,9 @@ canvas.addEventListener("pointermove", e => {
 
 });
 
-// ---------- POINTER UP ----------
-
-window.addEventListener("pointerup", e => {
+window.addEventListener("pointerup",e=>{
 
   pointers.delete(e.pointerId);
-
-});
-
-// ---------- SELECT TOOL ----------
-
-const selectBtn =
-  document.getElementById("selectTool");
-
-selectBtn.onclick = () => {
-
-  state.tool = "select";
-
-  document
-    .querySelectorAll(".tool")
-    .forEach(t => t.classList.remove("active"));
-
-  selectBtn.classList.add("active");
-
-};
-
-brushTool.onclick = () => {
-
-  state.tool = "brush";
-
-  document
-    .querySelectorAll(".tool")
-    .forEach(t => t.classList.remove("active"));
-
-  brushTool.classList.add("active");
-
-};
-
-eraserTool.onclick = () => {
-
-  state.tool = "erase";
-
-  document
-    .querySelectorAll(".tool")
-    .forEach(t => t.classList.remove("active"));
-
-  eraserTool.classList.add("active");
-
-};
-
-// ---------- PAN START ----------
-
-canvas.addEventListener("pointerdown", e => {
-
-  if (state.tool !== "select") return;
-
-  panStartX = e.clientX;
-  panStartOffset = state.offsetX;
 
 });
 
@@ -634,21 +596,23 @@ canvas.addEventListener("pointerdown", e => {
 
 let lastTap = 0;
 
-canvas.addEventListener("pointerup", e => {
+canvas.addEventListener("pointerup",e=>{
 
   const now = Date.now();
 
-  if (now - lastTap < 260) {
+  if(now - lastTap < 250){
 
     const cell = pointerToCell(e);
 
-    if (!cell) return;
+    if(cell){
 
-    snapshot();
+      pushHistory();
 
-    grid[cell.row][cell.col] = null;
+      grid[cell.row][cell.col]=null;
 
-    draw();
+      draw();
+
+    }
 
   }
 
@@ -656,146 +620,239 @@ canvas.addEventListener("pointerup", e => {
 
 });
 
-// ---------- TRACK SELECT ----------
+// ---------- WHEEL ZOOM ----------
 
-document
-  .querySelectorAll(".track")
-  .forEach(trackBtn => {
-
-    trackBtn.onclick = () => {
-
-      document
-        .querySelectorAll(".track")
-        .forEach(t => t.classList.remove("active"));
-
-      trackBtn.classList.add("active");
-
-      state.currentTrack =
-        Number(trackBtn.dataset.track);
-
-      document
-        .querySelectorAll(".color")
-        .forEach(c => c.classList.remove("active"));
-
-      document
-        .querySelector(
-          `.color[data-track="${state.currentTrack}"]`
-        )
-        .classList.add("active");
-
-    };
-
-  });
-
-// ---------- NEW PROJECT ----------
-
-document.getElementById("newProjectBtn").onclick = () => {
-
-  if (!confirm("Create new project?")) return;
-
-  snapshot();
-
-  grid = createGrid();
-
-  state.offsetX = 0;
-  state.zoom = 1;
-
-  updateGridSize();
-
-};
-
-// ---------- MOUSE WHEEL ZOOM ----------
-
-canvas.addEventListener("wheel", e => {
+canvas.addEventListener("wheel",e=>{
 
   e.preventDefault();
 
-  const dir =
+  const delta =
     e.deltaY > 0 ? -0.1 : 0.1;
 
   state.zoom = clamp(
-    state.zoom + dir,
+    state.zoom + delta,
     viewport.minZoom,
     viewport.maxZoom
   );
 
   updateGridSize();
 
-}, { passive: false });
+},{passive:false});
 
-// ---------- RESET VIEW ----------
+// ---------- TRACK PANEL ----------
 
-menuBtn.onclick = () => {
+tracks.forEach(track=>{
 
-  state.zoom = 1;
-  state.offsetX = 0;
+  track.addEventListener("dblclick",()=>{
+
+    const name = prompt(
+      "Rename Track",
+      track.children[1].textContent
+    );
+
+    if(!name) return;
+
+    track.children[1].textContent = name;
+
+  });
+
+});
+
+// ---------- NEW PROJECT ----------
+
+document
+.getElementById("newProjectBtn")
+.onclick=()=>{
+
+  const ok = confirm(
+    "Create new project?"
+  );
+
+  if(!ok) return;
+
+  history=[];
+  future=[];
+
+  grid=createGrid();
+
+  state.zoom=1;
+  state.offsetX=0;
+  state.track=0;
 
   updateGridSize();
 
 };
-/* ======================================================
-   APP.JS (PART 3/3)
-   Sequencer + Tone.js + Save
-====================================================== */
 
-// ---------- AUDIO ENGINE ----------
+// ---------- RESET VIEW ----------
 
-let synth = null;
+document
+.getElementById("menuBtn")
+.ondblclick=()=>{
+
+  state.zoom=1;
+  state.offsetX=0;
+
+  updateGridSize();
+
+};
+
+// ---------- SELECTION BOX ----------
+
+const selectionBox =
+  document.getElementById("selectionBox");
+
+let selecting=false;
+let selectStart=null;
+
+canvas.addEventListener("pointerdown",e=>{
+
+  if(state.tool!=="select") return;
+
+  selecting=true;
+
+  selectStart={
+    x:e.offsetX,
+    y:e.offsetY
+  };
+
+  selectionBox.hidden=false;
+
+});
+
+canvas.addEventListener("pointermove",e=>{
+
+  if(!selecting) return;
+
+  const x=Math.min(selectStart.x,e.offsetX);
+  const y=Math.min(selectStart.y,e.offsetY);
+
+  const w=Math.abs(e.offsetX-selectStart.x);
+  const h=Math.abs(e.offsetY-selectStart.y);
+
+  selectionBox.style.left=x+"px";
+  selectionBox.style.top=y+"px";
+  selectionBox.style.width=w+"px";
+  selectionBox.style.height=h+"px";
+
+});
+
+window.addEventListener("pointerup",()=>{
+
+  if(!selecting) return;
+
+  selecting=false;
+
+  selectionBox.hidden=true;
+
+});
+
+/* =========================================================
+   PLAY MUSIC THEORY PRO
+   app.js — Part 3/3
+   Tone.js + Playhead + Save
+========================================================= */
+
+// ---------- MIDI ----------
+
+const MIDI = [
+  84,83,81,79,77,76,74,72,
+  71,69,67,65,64,62,60,59
+];
+
+// ---------- DOM ----------
+
+const playBtn = document.getElementById("playBtn");
+const playhead = document.getElementById("playhead");
+const playTriangle = document.getElementById("playTriangle");
+
+const saveBtn = document.getElementById("saveProjectBtn");
+const exportMidiBtn = document.getElementById("exportMidiBtn");
+
+// ---------- AUDIO ----------
+
+let synth;
 
 function createInstrument(name){
 
   if(synth) synth.dispose();
 
-  const config = {
+  const preset={
+
     "Music Box":{
       oscillator:{type:"triangle"},
-      envelope:{attack:0.01,decay:0.08,sustain:0.15,release:0.4}
+      envelope:{
+        attack:0.01,
+        decay:0.08,
+        sustain:0.18,
+        release:0.4
+      }
     },
-    "Piano":{
+
+    Piano:{
       oscillator:{type:"sine4"},
-      envelope:{attack:0.005,decay:0.12,sustain:0.25,release:0.7}
+      envelope:{
+        attack:0.005,
+        decay:0.15,
+        sustain:0.2,
+        release:0.8
+      }
     },
-    "Synth":{
+
+    Synth:{
       oscillator:{type:"sawtooth"},
-      envelope:{attack:0.01,release:0.25}
+      envelope:{
+        attack:0.01,
+        release:0.25
+      }
     },
-    "Bell":{
+
+    Bell:{
       oscillator:{type:"triangle8"},
-      envelope:{attack:0.001,release:1.2}
+      envelope:{
+        attack:0.001,
+        release:1.2
+      }
     },
-    "Marimba":{
+
+    Marimba:{
       oscillator:{type:"square"},
-      envelope:{attack:0.002,decay:0.15,sustain:0.1,release:0.5}
+      envelope:{
+        attack:0.002,
+        decay:0.2,
+        sustain:0.1,
+        release:0.5
+      }
     }
+
   };
 
-  synth = new Tone.PolySynth(
+  synth=new Tone.PolySynth(
     Tone.Synth,
-    config[name]
+    preset[name]
   ).toDestination();
 
 }
 
 createInstrument("Music Box");
 
-instrumentSelect.onchange = e=>{
+instrumentSelect.onchange=e=>{
   createInstrument(e.target.value);
+  saveLocal();
 };
 
-// ---------- PLAYHEAD ----------
+// ---------- PLAYBACK ----------
 
-let playPosition = 0;
-let animationId = null;
+let playColumn=0;
 
 function updatePlayhead(){
 
-  const x =
-    LABEL_WIDTH +
-    playPosition * CELL_W -
+  const x=
+    CONFIG.labelWidth+
+    playColumn*CELL_W-
     state.offsetX;
 
-  playhead.style.left = x + "px";
-  playTriangle.style.left = (x-7) + "px";
+  playhead.style.left=x+"px";
+  playTriangle.style.left=(x-7)+"px";
 
 }
 
@@ -805,30 +862,30 @@ async function playSong(){
 
   await Tone.start();
 
-  state.playing = true;
+  state.playing=true;
 
-  document.body.classList.add("playing");
+  playBtn.textContent="❚❚";
 
-  playBtn.innerText = "❚❚";
-
-  const stepTime = 60000 / state.bpm / 2;
+  const step=
+    60000/state.bpm/2;
 
   for(
-    playPosition=0;
-    playPosition<COLS;
-    playPosition++
+    playColumn=0;
+    playColumn<CONFIG.cols;
+    playColumn++
   ){
+
+    if(!state.playing) break;
 
     updatePlayhead();
 
     const notes=[];
 
-    for(let r=0;r<ROWS;r++){
+    for(let r=0;r<CONFIG.rows;r++){
 
-      const note =
-        grid[r][playPosition];
+      const cell=grid[r][playColumn];
 
-      if(note){
+      if(cell){
 
         notes.push(
           Tone.Frequency(
@@ -850,11 +907,9 @@ async function playSong(){
 
     }
 
-    await new Promise(res=>{
-      setTimeout(res,stepTime);
-    });
-
-    if(!state.playing) break;
+    await new Promise(res=>
+      setTimeout(res,step)
+    );
 
   }
 
@@ -866,44 +921,22 @@ function stopSong(){
 
   state.playing=false;
 
-  playPosition=0;
+  playColumn=0;
 
-  cancelAnimationFrame(animationId);
+  playBtn.textContent="▶";
 
   playhead.style.left="34px";
   playTriangle.style.left="27px";
-
-  document.body.classList.remove("playing");
-
-  playBtn.innerText="▶";
 
 }
 
 playBtn.onclick=()=>{
 
   if(state.playing){
-
     stopSong();
-
   }else{
-
     playSong();
-
   }
-
-};
-
-// ---------- BPM ----------
-
-bpmSlider.oninput=()=>{
-
-  state.bpm =
-    Number(bpmSlider.value);
-
-  bpmLabel.innerText =
-    state.bpm;
-
-  saveLocal();
 
 };
 
@@ -914,12 +947,10 @@ function saveLocal(){
   const project={
 
     bpm:state.bpm,
-
     zoom:state.zoom,
+    offsetX:state.offsetX,
 
-    offset:state.offsetX,
-
-    cols:COLS,
+    cols:CONFIG.cols,
 
     instrument:
       instrumentSelect.value,
@@ -937,30 +968,32 @@ function saveLocal(){
 
 function loadLocal(){
 
-  const raw =
-    localStorage.getItem("PMT_PROJECT");
+  const raw=
+    localStorage.getItem(
+      "PMT_PROJECT"
+    );
 
   if(!raw) return;
 
-  const p = JSON.parse(raw);
+  const p=JSON.parse(raw);
 
-  COLS = p.cols;
+  CONFIG.cols=p.cols;
 
-  grid = p.grid;
+  grid=p.grid;
 
-  state.bpm = p.bpm;
+  state.bpm=p.bpm;
+  state.zoom=p.zoom;
+  state.offsetX=p.offsetX;
 
-  state.zoom = p.zoom;
+  bpmSlider.value=p.bpm;
+  bpmLabel.textContent=p.bpm;
 
-  state.offsetX = p.offset;
-
-  bpmSlider.value = p.bpm;
-  bpmLabel.innerText = p.bpm;
-
-  instrumentSelect.value =
+  instrumentSelect.value=
     p.instrument;
 
-  createInstrument(p.instrument);
+  createInstrument(
+    p.instrument
+  );
 
   resizeCanvas();
 
@@ -971,20 +1004,19 @@ window.addEventListener(
   saveLocal
 );
 
-loadLocal();
-
 // ---------- SAVE JSON ----------
 
-saveProjectBtn.onclick=()=>{
+saveBtn.onclick=()=>{
 
   saveLocal();
 
   const blob=new Blob(
+
     [JSON.stringify({
 
       bpm:state.bpm,
 
-      cols:COLS,
+      cols:CONFIG.cols,
 
       instrument:
         instrumentSelect.value,
@@ -992,7 +1024,11 @@ saveProjectBtn.onclick=()=>{
       grid
 
     },null,2)],
-    {type:"application/json"}
+
+    {
+      type:"application/json"
+    }
+
   );
 
   const a=document.createElement("a");
@@ -1006,11 +1042,12 @@ saveProjectBtn.onclick=()=>{
 
 };
 
-// ---------- LOAD JSON ----------
+// ---------- OPEN JSON ----------
 
-newProjectBtn.ondblclick=()=>{
+saveBtn.ondblclick=()=>{
 
-  const input=document.createElement("input");
+  const input=
+    document.createElement("input");
 
   input.type="file";
   input.accept=".json";
@@ -1026,18 +1063,21 @@ newProjectBtn.ondblclick=()=>{
       const p=
         JSON.parse(reader.result);
 
-      grid=p.grid;
+      CONFIG.cols=p.cols;
 
-      COLS=p.cols;
+      grid=p.grid;
 
       state.bpm=p.bpm;
 
       bpmSlider.value=p.bpm;
-      bpmLabel.innerText=p.bpm;
+      bpmLabel.textContent=p.bpm;
 
-      instrumentSelect.value=p.instrument;
+      instrumentSelect.value=
+        p.instrument;
 
-      createInstrument(p.instrument);
+      createInstrument(
+        p.instrument
+      );
 
       resizeCanvas();
 
@@ -1051,27 +1091,37 @@ newProjectBtn.ondblclick=()=>{
 
 };
 
-// ---------- MIDI DATA ----------
+// ---------- EXPORT MIDI EVENTS ----------
 
-function buildMidiData(){
+function buildMidiEvents(){
 
   const events=[];
 
-  for(let c=0;c<COLS;c++){
+  for(
+    let c=0;
+    c<CONFIG.cols;
+    c++
+  ){
 
-    for(let r=0;r<ROWS;r++){
+    for(
+      let r=0;
+      r<CONFIG.rows;
+      r++
+    ){
 
-      if(!grid[r][c]) continue;
+      const note=grid[r][c];
+
+      if(!note) continue;
 
       events.push({
 
         tick:c,
 
-        note:MIDI[r],
+        midi:MIDI[r],
 
-        length:1,
+        track:note.track,
 
-        track:grid[r][c].track
+        length:1
 
       });
 
@@ -1086,12 +1136,19 @@ function buildMidiData(){
 exportMidiBtn.onclick=()=>{
 
   const blob=new Blob(
-    [JSON.stringify(
-      buildMidiData(),
-      null,
-      2
-    )],
-    {type:"application/json"}
+
+    [
+      JSON.stringify(
+        buildMidiEvents(),
+        null,
+        2
+      )
+    ],
+
+    {
+      type:"application/json"
+    }
+
   );
 
   const a=document.createElement("a");
@@ -1099,20 +1156,31 @@ exportMidiBtn.onclick=()=>{
   a.href=
     URL.createObjectURL(blob);
 
-  a.download="PMT_MIDI.json";
+  a.download="PMT_MIDI_Events.json";
 
   a.click();
 
 };
 
-// ---------- WAV ----------
+// ---------- WAV PLACEHOLDER ----------
 
-exportWavBtn.onclick=()=>{
+document
+.getElementById("exportWavBtn")
+.onclick=()=>{
 
   alert(
-`Tone.js không thể render WAV trực tiếp trong một file JS đơn.
+`Bản hiện tại đã có sequencer.
 
-Ở Part 7 mình sẽ thêm OfflineAudioContext để xuất WAV thật.`
+WAV export sẽ cần OfflineAudioContext ở audio.js.`
   );
 
 };
+
+// ---------- INIT ----------
+
+loadLocal();
+
+resizeCanvas();
+
+draw();
+```
