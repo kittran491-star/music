@@ -1,1 +1,192 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PMT Pro</title><link rel="stylesheet" href="style.css"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script></head><body><div class="app"><header><div class="logo">play music<br>theory ✦</div><button id="play">▶</button></header><div class="toolbar"><button id="brush" class="on">✏️</button><button id="eraser">🩹</button><button id="undo">↶</button><button id="clear">🗑</button></div><div class="wrap"><canvas id="cv"></canvas><div id="head"></div></div><div class="panel"><label>BPM <span id="bpmv">120</span></label><input id="bpm" type="range" min="60" max="180" value="120"><label>Instrument</label><select id="inst"><option>Music Box</option><option>Piano</option><option>Synth</option></select></div></div><script src="app.js"></script></body></html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <title>Play Music Theory Pro</title>
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tone.js -->
+  <script src="https://cdn.jsdelivr.net/npm/tone@15.0.4/build/Tone.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="phone">
+
+  <!-- Header -->
+  <header class="header">
+
+    <div class="logo">
+      <h1>play music</h1>
+      <h2>theory ✦</h2>
+    </div>
+
+    <div class="header-actions">
+      <button id="newBtn" class="circle">＋</button>
+      <button id="saveBtn" class="circle">⤓</button>
+      <button id="menuBtn" class="circle">☰</button>
+    </div>
+
+  </header>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+
+    <div class="tool-row">
+
+      <button id="brushTool" class="tool active">✏</button>
+      <button id="eraseTool" class="tool">⌫</button>
+      <button id="selectTool" class="tool">⬚</button>
+      <button id="undoBtn" class="tool">↶</button>
+      <button id="redoBtn" class="tool">↷</button>
+
+    </div>
+
+    <div class="palette" id="palette">
+
+      <button class="color active" data-track="0" style="background:#A98DF5"></button>
+      <button class="color" data-track="1" style="background:#64D2B0"></button>
+      <button class="color" data-track="2" style="background:#74B8FF"></button>
+      <button class="color" data-track="3" style="background:#FF9E7A"></button>
+      <button class="color" data-track="4" style="background:#F48B94"></button>
+      <button class="color" data-track="5" style="background:#FFD96B"></button>
+      <button class="color" data-track="6" style="background:#B7E3A1"></button>
+      <button class="color" data-track="7" style="background:#D8D8D8"></button>
+      <button class="color" data-track="8" style="background:#111827"></button>
+
+    </div>
+
+  </section>
+
+  <!-- Canvas -->
+  <section class="editor">
+
+    <div class="canvas-wrapper">
+
+      <div id="playhead"></div>
+      <div id="playTriangle"></div>
+
+      <canvas id="gridCanvas"></canvas>
+
+    </div>
+
+  </section>
+
+  <!-- Controls -->
+  <section class="controls">
+
+    <div class="transport">
+
+      <button id="playBtn" class="play-button">
+        ▶
+      </button>
+
+      <div class="tempo">
+
+        <div class="tempo-top">
+          <span>BPM</span>
+          <strong id="bpmLabel">120</strong>
+        </div>
+
+        <input
+          id="bpmSlider"
+          type="range"
+          min="60"
+          max="180"
+          value="120"
+        >
+
+      </div>
+
+    </div>
+
+    <div class="settings-grid">
+
+      <div class="setting">
+        <label>Instrument</label>
+
+        <select id="instrumentSelect">
+          <option>Music Box</option>
+          <option>Piano</option>
+          <option>Synth</option>
+          <option>Bell</option>
+        </select>
+      </div>
+
+      <div class="setting">
+        <label>Key</label>
+
+        <select id="keySelect">
+          <option>C</option>
+          <option>D</option>
+          <option>E</option>
+          <option>F</option>
+          <option>G</option>
+          <option>A</option>
+          <option>B</option>
+        </select>
+      </div>
+
+      <div class="setting">
+        <label>Scale</label>
+
+        <select id="scaleSelect">
+          <option>Major</option>
+          <option>Minor</option>
+          <option>Pentatonic</option>
+        </select>
+      </div>
+
+      <div class="setting">
+        <label>Grid</label>
+
+        <select id="gridSelect">
+          <option>24 × 16</option>
+          <option>32 × 16</option>
+          <option>48 × 16</option>
+        </select>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- Track list -->
+  <section class="tracks">
+
+    <div class="track" data-track="0">
+      <span class="dot" style="background:#A98DF5"></span>
+      <span>Track 1</span>
+    </div>
+
+    <div class="track" data-track="1">
+      <span class="dot" style="background:#64D2B0"></span>
+      <span>Track 2</span>
+    </div>
+
+    <div class="track" data-track="2">
+      <span class="dot" style="background:#74B8FF"></span>
+      <span>Track 3</span>
+    </div>
+
+  </section>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
